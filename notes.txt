@@ -7,3 +7,7 @@ October:
         take measurements of lecture pit and determine lighting hardware needed
         do a web audio lab, get some practice sending and recieving audio signals over an internet connection
         think about what the art should look like (color schemes, shapes, composition, lines, etc.)
+
+November:
+    Did updated background lit review and made new github repo for new project. Started on hardware, got RPi5
+    up and running as well as the arduino uno with some little LED sketches
