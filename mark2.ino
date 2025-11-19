@@ -1,9 +1,9 @@
 // Arduino LED control via Serial input
 // Turns on pink LED when '1' is pressed, blue LED when '2' is pressed
 
-const int pinkLED = 9;   // Pin for pink LED
-const int blueLED = 10;  // Pin for blue LED
-const int pink2LED = 11; // Pin for second pink LED
+const int pinkLED = 8;   // Pin for pink LED
+const int blueLED = 9;  // Pin for blue LED
+const int pink2LED = 10; // Pin for second pink LED
 
 void setup() {
   pinMode(pinkLED, OUTPUT);
@@ -19,7 +19,6 @@ void loop() {
   // Check if data is available in Serial input
   if (Serial.available() > 0) {
     char input = Serial.read();  // Read a single character
-    
     // Turn off both LEDs before switching
     digitalWrite(pinkLED, LOW);
     digitalWrite(blueLED, LOW);
@@ -38,13 +37,14 @@ void loop() {
 
     } 
     else if (input == '3') {
-      digitalWrite(blueLED, HIGH);
+      digitalWrite(pink2LED, HIGH);
       Serial.println("Pink 2 LED ON");
       delay(1000);
     } 
     else {
       Serial.println("Invalid input. Press 1, 2, or 3.");
     }
-  }
+    Serial.println(input);
+  } 
 }
 
