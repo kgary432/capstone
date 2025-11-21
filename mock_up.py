@@ -22,7 +22,8 @@ recent_bass = deque(maxlen=20)      # Keep last 20 bass values for beat detectio
 sample_counter = 0                 # Continuously incrementing sample counter (not tied to deque length)
 last_beat_sample = -1               # Track when last beat was detected (sample index)
 first_sample_in_window = 0          # Track the sample counter value of the first item in the history deques
-BEAT_COOLDOWN = 15                  # Minimum samples between beats (prevents multiple detections per beat)
+BEAT_COOLDOWN = 0                  # Minimum samples between beats (prevents multiple detections per beat)
+BEAT_THRESHOLD = 2.5               # Threshold for beat detection
 
 # Arduino serial connection (initialized in main)
 arduino = None
@@ -62,7 +63,7 @@ def analyze_audio(indata, frames, time_info, status):
                 last_beat_sample = sample_counter - BEAT_COOLDOWN  # Reset to allow immediate beat detection
                 samples_since_last_beat = BEAT_COOLDOWN  # Recalculate after reset
             
-            if bass > recent_avg * 1.5 and samples_since_last_beat >= BEAT_COOLDOWN:
+            if bass > recent_avg * BEAT_THRESHOLD and samples_since_last_beat >= BEAT_COOLDOWN:
                 beat = 1
                 last_beat_sample = sample_counter
                 
