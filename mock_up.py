@@ -11,26 +11,28 @@ import threading
 # Threading is necessary because:
 # - analyze_audio() runs in sounddevice's audio callback thread (called ~43 times/sec)
 # - update_plot() runs in matplotlib's animation thread (called ~20 times/sec)
-# Both threads access the same shared data (bass_history, etc.), so we need a lock
+# Both threads access the same shared data (bass_history, etc.), so it needs a lock
 # to prevent race conditions where one thread reads while the other writes
 data_lock = threading.Lock()
 bass_history = deque(maxlen=200)
 mid_history = deque(maxlen=200)
 treble_history = deque(maxlen=200)
-beat_flags = deque(maxlen=200)      # Track beats for visualization
+beat_flags = deque(maxlen=200)      # Track beats for visualization (0=no beat, 1=bass, 2=mid, 3=treble)
 recent_bass = deque(maxlen=20)      # Keep last 20 bass values for beat detection
+recent_mid = deque(maxlen=20)       # Keep last 20 mid values for beat detection
+recent_treble = deque(maxlen=20)    # Keep last 20 treble values for beat detection
 sample_counter = 0                 # Continuously incrementing sample counter (not tied to deque length)
-last_beat_sample = -1               # Track when last beat was detected (sample index)
+last_bass_beat_sample = -1          # Track when last bass beat was detected (sample index)
+last_mid_beat_sample = -1           # Track when last mid beat was detected (sample index)
+last_treble_beat_sample = -1        # Track when last treble beat was detected (sample index)
 first_sample_in_window = 0          # Track the sample counter value of the first item in the history deques
-BEAT_COOLDOWN = 0                  # Minimum samples between beats (prevents multiple detections per beat)
-BEAT_THRESHOLD = 2.5               # Threshold for beat detection
+BEAT_COOLDOWN = 15                  # Minimum samples between beats (prevents multiple detections per beat)
+BEAT_THRESHOLD = 1.5               # Threshold for beat detection
 
 # Arduino serial connection (initialized in main)
 arduino = None
-# Track which LED value to send next (1, 2, or 3, cycling)
-next_led_value = 1
 def analyze_audio(indata, frames, time_info, status):
-    global last_beat_sample, sample_counter, first_sample_in_window, next_led_value
+    global last_bass_beat_sample, last_mid_beat_sample, last_treble_beat_sample, sample_counter, first_sample_in_window
     
     # Check for audio input level (RMS)
     rms_level = np.sqrt(np.mean(indata**2))
@@ -43,40 +45,86 @@ def analyze_audio(indata, frames, time_info, status):
     mid = np.mean(fft[(freqs >= 250) & (freqs < 4000)])
     treble = np.mean(fft[(freqs >= 4000) & (freqs < 16000)])
     
-    # Simple beat detection: compare current bass to recent average
+    # Beat detection: compare current bass/mid/treble to recent averages
     with data_lock:
         recent_bass.append(bass)
+        recent_mid.append(mid)
+        recent_treble.append(treble)
         sample_counter += 1
         
         # Track when the history window wraps around (when deque is full and we're about to append)
         was_full = len(bass_history) == bass_history.maxlen
         
-        # Beat detection: current bass must be 1.5x above recent average AND cooldown must have passed
-        beat = 0
+        # Beat detection: current value must be 1.5x above recent average AND cooldown must have passed
+        beat = 0  # 0=no beat, 1=bass, 2=mid, 3=treble
+        
+        # Check for bass beat
         if len(recent_bass) >= 5:
             recent_avg = np.mean(list(recent_bass)[:-1])  # Average excluding current value
-            samples_since_last_beat = sample_counter - last_beat_sample
+            samples_since_last_beat = sample_counter - last_bass_beat_sample
             
-            # Ensure last_beat_sample doesn't get too far behind (reset if it's way outside the window)
-            # This prevents issues after the window wraps around multiple times
-            if last_beat_sample > 0 and samples_since_last_beat > bass_history.maxlen * 2:
-                last_beat_sample = sample_counter - BEAT_COOLDOWN  # Reset to allow immediate beat detection
-                samples_since_last_beat = BEAT_COOLDOWN  # Recalculate after reset
+            # Ensure last_bass_beat_sample doesn't get too far behind (reset if it's way outside the window)
+            if last_bass_beat_sample > 0 and samples_since_last_beat > bass_history.maxlen * 2:
+                last_bass_beat_sample = sample_counter - BEAT_COOLDOWN
+                samples_since_last_beat = BEAT_COOLDOWN
             
             if bass > recent_avg * BEAT_THRESHOLD and samples_since_last_beat >= BEAT_COOLDOWN:
                 beat = 1
-                last_beat_sample = sample_counter
+                last_bass_beat_sample = sample_counter
                 
-                # Send alternating LED command to Arduino when beat is detected
+                # Send LED command to Arduino when bass beat is detected
                 if arduino and arduino.is_open:
                     try:
-                        arduino.reset_input_buffer()  # Clear any pending input
-                        arduino.write(f"{next_led_value}\n".encode('utf-8'))
+                        arduino.reset_input_buffer()
+                        arduino.write(f"1\n".encode('utf-8'))
                         arduino.flush()
-                        print(f"🎵 BEAT DETECTED! Sent LED value: {next_led_value}")
-                        
-                        # Cycle to next LED value (1 -> 2 -> 3 -> 1)
-                        next_led_value = (next_led_value % 3) + 1
+                        print(f"BASS BEAT DETECTED. Sent LED value: 1")
+                    except Exception as e:
+                        print(f"Error sending to Arduino: {e}")
+        
+        # Check for mid beat (if bass beat not already detected)
+        if beat == 0 and len(recent_mid) >= 5:
+            recent_avg = np.mean(list(recent_mid)[:-1])
+            samples_since_last_beat = sample_counter - last_mid_beat_sample
+            
+            if last_mid_beat_sample > 0 and samples_since_last_beat > bass_history.maxlen * 2:
+                last_mid_beat_sample = sample_counter - BEAT_COOLDOWN
+                samples_since_last_beat = BEAT_COOLDOWN
+            
+            if mid > recent_avg * BEAT_THRESHOLD and samples_since_last_beat >= BEAT_COOLDOWN:
+                beat = 2
+                last_mid_beat_sample = sample_counter
+                
+                # Send LED command to Arduino when mid beat is detected
+                if arduino and arduino.is_open:
+                    try:
+                        arduino.reset_input_buffer()
+                        arduino.write(f"2\n".encode('utf-8'))
+                        arduino.flush()
+                        print(f"MID BEAT DETECTED. Sent LED value: 2")
+                    except Exception as e:
+                        print(f"Error sending to Arduino: {e}")
+        
+        # Check for treble beat (if bass/mid beat not already detected)
+        if beat == 0 and len(recent_treble) >= 5:
+            recent_avg = np.mean(list(recent_treble)[:-1])
+            samples_since_last_beat = sample_counter - last_treble_beat_sample
+            
+            if last_treble_beat_sample > 0 and samples_since_last_beat > bass_history.maxlen * 2:
+                last_treble_beat_sample = sample_counter - BEAT_COOLDOWN
+                samples_since_last_beat = BEAT_COOLDOWN
+            
+            if treble > recent_avg * BEAT_THRESHOLD and samples_since_last_beat >= BEAT_COOLDOWN:
+                beat = 3
+                last_treble_beat_sample = sample_counter
+                
+                # Send LED command to Arduino when treble beat is detected
+                if arduino and arduino.is_open:
+                    try:
+                        arduino.reset_input_buffer()
+                        arduino.write(f"3\n".encode('utf-8'))
+                        arduino.flush()
+                        print(f"TREBLE BEAT DETECTED. Sent LED value: 3")
                     except Exception as e:
                         print(f"Error sending to Arduino: {e}")
         
@@ -84,7 +132,7 @@ def analyze_audio(indata, frames, time_info, status):
         bass_history.append(bass)
         mid_history.append(mid)
         treble_history.append(treble)
-        beat_flags.append(beat == 1)
+        beat_flags.append(beat)  # 0=no beat, 1=bass, 2=mid, 3=treble
         
         # If the deque was full and we just added a new item, the oldest was removed
         # Update first_sample_in_window to track the new first item
@@ -128,11 +176,20 @@ def update_plot(frame):
         y_max = max_val * 1.1
         ax.set_ylim(0, y_max)
         
-        # Draw vertical lines for beats
-        beat_positions = [i for i, is_beat in enumerate(beats) if is_beat]
-        if beat_positions:
-            ax.vlines(beat_positions, 0, y_max, colors='orange', linestyles='--', 
-                     linewidth=2, alpha=0.7, label='Beat')
+        # Draw vertical lines for beats (different colors for each type)
+        bass_beat_positions = [i for i, beat_type in enumerate(beats) if beat_type == 1]
+        mid_beat_positions = [i for i, beat_type in enumerate(beats) if beat_type == 2]
+        treble_beat_positions = [i for i, beat_type in enumerate(beats) if beat_type == 3]
+        
+        if bass_beat_positions:
+            ax.vlines(bass_beat_positions, 0, y_max, colors='blue', linestyles='--', 
+                     linewidth=2, alpha=0.7, label='Bass Beat')
+        if mid_beat_positions:
+            ax.vlines(mid_beat_positions, 0, y_max, colors='green', linestyles='--', 
+                     linewidth=2, alpha=0.7, label='Mid Beat')
+        if treble_beat_positions:
+            ax.vlines(treble_beat_positions, 0, y_max, colors='red', linestyles='--', 
+                     linewidth=2, alpha=0.7, label='Treble Beat')
     else:
         ax.set_ylim(0, 100)
 
@@ -223,7 +280,10 @@ if __name__ == "__main__":
         else:
             print("Capturing from microphone (default device)")
         
-        print("\n🎵 Beat detection active! LED commands (1, 2, 3) will be sent on each beat.")
+        print("\nBeat detection active! LED commands:")
+        print("   - Bass beats → LED value 1")
+        print("   - Mid beats → LED value 2")
+        print("   - Treble beats → LED value 3")
         print("Press Ctrl+C to stop.\n")
         
         with sd.InputStream(**stream_kwargs):
