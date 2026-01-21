@@ -26,8 +26,16 @@ last_bass_beat_sample = -1          # Track when last bass beat was detected (sa
 last_mid_beat_sample = -1           # Track when last mid beat was detected (sample index)
 last_treble_beat_sample = -1        # Track when last treble beat was detected (sample index)
 first_sample_in_window = 0          # Track the sample counter value of the first item in the history deques
+
+# tweakable parameters, play around with these until you get the desired effect
 BEAT_COOLDOWN = 15                  # Minimum samples between beats (prevents multiple detections per beat)
-BEAT_THRESHOLD = 1.5               # Threshold for beat detection
+BEAT_THRESHOLD = 2.0               # Threshold for beat detection
+
+#
+# TODO: add a way to change the threshold and cooldown
+#
+
+
 
 # Arduino serial connection (initialized in main)
 arduino = None
@@ -193,6 +201,12 @@ def update_plot(frame):
     else:
         ax.set_ylim(0, 100)
 
+# *********************************************************************************
+#
+# playback device currently doesnt work, TODO: fix this, maybe?
+#
+# *********************************************************************************
+
 # Find and use loopback device for system audio capture
 def find_loopback_device():
     """Find a loopback device that captures system audio output."""
@@ -238,21 +252,21 @@ def find_loopback_device():
 if __name__ == "__main__":
     # Initialize Arduino connection
     try:
-        arduino = serial.Serial('/dev/cu.usbmodem101', 9600, timeout=1)
-        time.sleep(2)  # Give Arduino time to reset
+        arduino = serial.Serial('/dev/cu.usbmodem1101', 9600, timeout=1)
+        time.sleep(5)  # Give Arduino time to reset
         print("Arduino connected successfully!")
         
         # Discard any initial messages from Arduino (like the setup message)
-        time.sleep(0.5)
+        time.sleep(1)
         arduino.reset_input_buffer()  # Clear any buffered data
     except serial.SerialException as e:
-        print(f"⚠️  Serial connection error: {e}")
-        print("⚠️  Continuing without Arduino - beat detection will still work but LEDs won't update.")
+        print(f" Serial connection error: {e}")
+        print(" Continuing without Arduino - beat detection will still work but LEDs won't update.")
         print("Make sure the Arduino is connected and the port is correct.")
         arduino = None
     except Exception as e:
-        print(f"⚠️  Unexpected error connecting to Arduino: {e}")
-        print("⚠️  Continuing without Arduino - beat detection will still work but LEDs won't update.")
+        print(f" Unexpected error connecting to Arduino: {e}")
+        print(" Continuing without Arduino - beat detection will still work but LEDs won't update.")
         arduino = None
     
     # Set up the plot
@@ -280,7 +294,7 @@ if __name__ == "__main__":
         else:
             print("Capturing from microphone (default device)")
         
-        print("\nBeat detection active! LED commands:")
+        print("\nBeat detection active. LED commands:")
         print("   - Bass beats → LED value 1")
         print("   - Mid beats → LED value 2")
         print("   - Treble beats → LED value 3")

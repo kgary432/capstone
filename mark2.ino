@@ -1,5 +1,6 @@
 // Arduino LED control via Serial input
-// Turns on pink LED when '1' is pressed, blue LED when '2' is pressed
+// Turns on pink LED when '1' is pressed, blue LED when '2' is pressed, 
+// other pink LED when '3' is pressed
 
 const int pinkLED = 8;   // Pin for pink LED
 const int blueLED = 9;  // Pin for blue LED
