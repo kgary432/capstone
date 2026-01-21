@@ -11,3 +11,16 @@ October:
 November:
     Did updated background lit review and made new github repo for new project. Started on hardware, got RPi5
     up and running as well as the arduino uno with some little LED sketches
+
+
+January:
+    implemented mid and treble beats as well. found the cause of port change issue, too much effort to fix it 
+    but easy to circumvent. 
+
+    need to make treble/mid/bass beats able to be sent/rec. at in parallel. maybe change LED from on/off to a 
+    more visually interesting system, like high then output -- until off for a pulse effect?
+    rest of hardware has arrived so need to get that put together and assembled (and deal with all subsequent issues)
+
+    screen art has been commissioned from an artists, stackable pngs of high/med/low freq hits. will need to implement that once
+    I get those images or with placeholders until then. this will replace the graph output (graph output code toggle in a dev mode?)
+    
