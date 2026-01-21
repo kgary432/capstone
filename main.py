@@ -222,7 +222,7 @@ def find_loopback_device():
         if device['max_input_channels'] > 0:
             if any(keyword in name_lower for keyword in loopback_keywords):
                 print(f"Found loopback device: {device['name']} (device {i})")
-                print("\n⚠️  IMPORTANT: To capture system audio AND hear it on speakers:")
+                print("\n IMPORTANT: To capture system audio AND hear it on speakers:")
                 print("   Create a Multi-Output Device:")
                 print("   1. Open 'Audio MIDI Setup' (search in Spotlight)")
                 print("   2. Click the '+' button at bottom left → 'Create Multi-Output Device'")
@@ -250,14 +250,18 @@ def find_loopback_device():
 
 # Main execution
 if __name__ == "__main__":
-    # Initialize Arduino connection
+    # Initialize Arduino connection 
+    # EDIT ardiuno path HERE!!!!
     try:
+
+            # Top port: /dev/cu.usbmodem101
+            # Bottom port: /dev/cu.usbmodem1101
         arduino = serial.Serial('/dev/cu.usbmodem1101', 9600, timeout=1)
-        time.sleep(5)  # Give Arduino time to reset
+        time.sleep(2)  # Give Arduino time to reset
         print("Arduino connected successfully!")
         
         # Discard any initial messages from Arduino (like the setup message)
-        time.sleep(1)
+        time.sleep(.5)
         arduino.reset_input_buffer()  # Clear any buffered data
     except serial.SerialException as e:
         print(f" Serial connection error: {e}")
