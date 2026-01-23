@@ -34,15 +34,20 @@ first_sample_in_window = (
     0  # Track the sample counter value of the first item in the history deques
 )
 
-# tweakable parameters, play around with these until you get the desired effect
-BEAT_COOLDOWN = (
-    5  # Minimum samples between beats (prevents multiple detections per beat)
-)
-BEAT_THRESHOLD = 2.0  # Threshold for beat detection
+# Beat Cooldown: Minimum samples between beats (prevents multiple detections per beat)
+# Beat Threshold: ratio of normal input to current input to detect a beat
 
-#
-# TODO: add a way to change the threshold and cooldown while running?
-#
+# TREBLE tweakable parameters, play around with these until you get the desired effect
+TREBLE_BEAT_COOLDOWN = (5)
+TREBLE_BEAT_THRESHOLD = 2.5  
+
+# MID tweakable parameters, play around with these until you get the desired effect
+MID_BEAT_COOLDOWN = (5)
+MID_BEAT_THRESHOLD = 2.0
+
+# BASS tweakable parameters, play around with these until you get the desired effect
+BASS_BEAT_COOLDOWN = (5)
+BASS_BEAT_THRESHOLD = 1.5
 
 
 # Arduino serial connection (initialized in main)
@@ -88,12 +93,12 @@ def analyze_audio(indata, frames, time_info, status):
                 last_bass_sample > 0
                 and samples_since_last_beat > 400
             ):
-                last_bass_sample = sample_counter - BEAT_COOLDOWN
-                samples_since_last_beat = BEAT_COOLDOWN
+                last_bass_sample = sample_counter - BASS_BEAT_COOLDOWN
+                samples_since_last_beat = BASS_BEAT_COOLDOWN
 
             if (
-                bass > recent_avg * BEAT_THRESHOLD
-                and samples_since_last_beat >= BEAT_COOLDOWN
+                bass > recent_avg * BASS_BEAT_THRESHOLD
+                and samples_since_last_beat >= BASS_BEAT_COOLDOWN
             ):
                 beat = 1
                 last_bass_sample = sample_counter
@@ -117,12 +122,12 @@ def analyze_audio(indata, frames, time_info, status):
                 last_mid_sample > 0
                 and samples_since_last_beat > 400
             ):
-                last_mid_sample = sample_counter - BEAT_COOLDOWN
-                samples_since_last_beat = BEAT_COOLDOWN
+                last_mid_sample = sample_counter - MID_BEAT_COOLDOWN
+                samples_since_last_beat = MID_BEAT_COOLDOWN
 
             if (
-                mid > recent_avg * BEAT_THRESHOLD
-                and samples_since_last_beat >= BEAT_COOLDOWN
+                mid > recent_avg * MID_BEAT_THRESHOLD
+                and samples_since_last_beat >= MID_BEAT_COOLDOWN
             ):
                 beat = 2
                 last_mid_sample = sample_counter
@@ -146,12 +151,12 @@ def analyze_audio(indata, frames, time_info, status):
                 last_treble_sample > 0
                 and samples_since_last_beat > 400
             ):
-                last_treble_sample = sample_counter - BEAT_COOLDOWN
-                samples_since_last_beat = BEAT_COOLDOWN
+                last_treble_sample = sample_counter - TREBLE_BEAT_COOLDOWN
+                samples_since_last_beat = TREBLE_BEAT_COOLDOWN
 
             if (
-                treble > recent_avg * BEAT_THRESHOLD
-                and samples_since_last_beat >= BEAT_COOLDOWN
+                treble > recent_avg * TREBLE_BEAT_THRESHOLD
+                and samples_since_last_beat >= TREBLE_BEAT_COOLDOWN
             ):
                 beat = 3
                 last_treble_sample = sample_counter
