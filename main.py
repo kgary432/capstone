@@ -38,15 +38,15 @@ first_sample_in_window = (
 # Beat Threshold: ratio of normal input to current input to detect a beat
 
 # TREBLE tweakable parameters, play around with these until you get the desired effect
-TREBLE_BEAT_COOLDOWN = (5)
+TREBLE_BEAT_COOLDOWN = 5
 TREBLE_BEAT_THRESHOLD = 2.5  
 
 # MID tweakable parameters, play around with these until you get the desired effect
-MID_BEAT_COOLDOWN = (5)
+MID_BEAT_COOLDOWN = 5
 MID_BEAT_THRESHOLD = 2.0
 
 # BASS tweakable parameters, play around with these until you get the desired effect
-BASS_BEAT_COOLDOWN = (5)
+BASS_BEAT_COOLDOWN = 5
 BASS_BEAT_THRESHOLD = 1.5
 
 
