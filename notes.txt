@@ -14,6 +14,8 @@ November:
 
 
 January:
+
+  Jan 21---------------------------
     implemented mid and treble beats as well. found the cause of port change issue, too much effort to fix it 
     but easy to circumvent. 
 
@@ -23,4 +25,14 @@ January:
 
     screen art has been commissioned from an artists, stackable pngs of high/med/low freq hits. will need to implement that once
     I get those images or with placeholders until then. this will replace the graph output (graph output code toggle in a dev mode?)
+  
+  Jan 23
+    changed beat thresholds and cooldowns to be frequency specific to hapefully make it look better/function better esp with
+    genres other than hardstyle EDM
+
+    TODO: play around with threshold values and come up with some recommended benchmark settings for new users
     
+    not feasible for capstone goal but maybe in the future query spotify/shazam api to identify song and genre to auto-
+    select appropriate threshold and cooldown values?
+
+
