@@ -2,8 +2,6 @@
 
 mark2.ino is final firmware for this project, anything else is experimental.
 
-Proposal and background are outdated, refer to anything labeled Apple Py as a final source.
-
 to run:
 
 1. Connect microcontroller to computer, (In Arduino IDE) check port number and update in main.py if necessary,
