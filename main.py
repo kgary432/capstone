@@ -8,9 +8,12 @@ import numpy as np
 import serial
 import sounddevice as sd
 
+# To run: poetry run python main.py
+# Cntrl+C to stop
+
 # Shared data storage for thread-safe access
 # Threading is due to performance issues and data access issues:
-# - analyze_audio() runs in sounddevice's audio callback thread (called ~43 times/sec)
+# - analyze_audio() runs in sounddevice's audio callback thread (called ~40 times/sec)
 # - update_plot() runs in matplotlib's animation thread (called ~20 times/sec)
 # Both threads access the same shared data (bass_history, etc.), so it needs a lock
 # to prevent race conditions where one thread reads while the other writes
@@ -38,7 +41,7 @@ first_sample_in_window = (
 BEAT_COOLDOWN = (
     5  # Minimum samples between beats (prevents multiple detections per beat)
 )
-BEAT_THRESHOLD = 2.0  # Threshold for beat detection
+BEAT_THRESHOLD = 2  # Threshold for beat detection
 
 
 # Arduino serial connection (initialized in main)
@@ -469,6 +472,10 @@ def find_loopback_device():
     
     Returns:
         Device index if found, or None if no loopback device is available
+
+        NOTE::::::
+        Most of this is broken and doesn't run but it breaks way worse if deleted. it's become structural, 
+        change at your own risk!
     """
     devices = sd.query_devices()
     
