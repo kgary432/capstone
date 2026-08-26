@@ -2,7 +2,6 @@
 name = "capstone"
 version = "0.1.0"
 description = ""
-package-mode = false
 authors = [
     {name = "kgary432",email = "kgary7373@gmail.com"}
 ]
@@ -18,6 +17,14 @@ dependencies = [
     "isort (>=7.0.0,<8.0.0)"
 ]
 
+[tool.poetry]
+package-mode = false
+
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+pythonVersion = "3.13"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
