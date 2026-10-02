@@ -2,9 +2,9 @@
 // Turns on pink LED when '1' is pressed, blue LED when '2' is pressed, 
 // other pink LED when '3' is pressed
 
-const int pinkLED = 8;   // Pin for pink LED
-const int blueLED = 9;  // Pin for blue LED
-const int pink2LED = 10; // Pin for second pink LED
+const int pinkLED = 11;   // Pin for pink LED
+const int blueLED = 10;  // Pin for blue LED
+const int pink2LED = 9; // Pin for second pink LED
 
 void setup() {
   pinMode(pinkLED, OUTPUT);
@@ -29,18 +29,18 @@ void loop() {
     if (input == '1') {
       digitalWrite(pinkLED, HIGH);
       Serial.println("Pink LED ON");
-      delay(1000);
+      delay(100);
     } 
     else if (input == '2') {
       digitalWrite(blueLED, HIGH);
       Serial.println("Blue LED ON");
-      delay(1000);
+      delay(100);
 
     } 
     else if (input == '3') {
       digitalWrite(pink2LED, HIGH);
       Serial.println("Pink 2 LED ON");
-      delay(1000);
+      delay(100);
     } 
     else {
       Serial.println("Invalid input. Press 1, 2, or 3.");
@@ -48,4 +48,3 @@ void loop() {
     Serial.println(input);
   } 
 }
-
