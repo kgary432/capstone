@@ -1,6 +1,7 @@
 import threading
 import time
 from collections import deque
+from serial.tools import list_ports
 
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
@@ -11,13 +12,12 @@ import sounddevice as sd
 # To run: poetry run python main.py
 # Cntrl+C to stop
 
-# Shared data storage for thread-safe access
-# Threading is due to performance issues and data access issues:
-# - analyze_audio() runs in sounddevice's audio callback thread (called ~40 times/sec)
-# - update_plot() runs in matplotlib's animation thread (called ~20 times/sec)
-# Both threads access the same shared data (bass_history, etc.), so it needs a lock
-# to prevent race conditions where one thread reads while the other writes
-data_lock = threading.Lock()
+#Global Variables
+
+arduino = None
+port = None
+data_lock = None
+
 bass_history = deque(maxlen=200)
 mid_history = deque(maxlen=200)
 treble_history = deque(maxlen=200)
@@ -37,6 +37,7 @@ first_sample_in_window = (
     0  # Track the sample counter value of the first item in the history deques
 )
 
+
 # tweakable parameters, play around with these until you get the desired effect
 BEAT_COOLDOWN = (
     5  # Minimum samples between beats (prevents multiple detections per beat)
@@ -44,8 +45,27 @@ BEAT_COOLDOWN = (
 BEAT_THRESHOLD = 2  # Threshold for beat detection
 
 
-# Arduino serial connection (initialized in main)
-arduino = None
+
+
+# Shared data storage for thread-safe access
+# Threading is due to performance issues and data access issues:
+# - analyze_audio() runs in sounddevice's audio callback thread (called ~40 times/sec)
+# - update_plot() runs in matplotlib's animation thread (called ~20 times/sec)
+# Both threads access the same shared data (bass_history, etc.), so it needs a lock
+# to prevent race conditions where one thread reads while the other writes
+
+def run_program():
+    global data_lock
+    global port
+    global arduino
+
+    port = find_arduino_port()
+
+    arduino = initialize_arduino_connection(port)
+
+    data_lock = threading.Lock()
+
+    # Arduino serial connection (initialized in main)
 
 
 #
@@ -416,7 +436,24 @@ def update_plot(frame):
         ax.set_ylim(0, 100)
 
 
-def initialize_arduino_connection(port="/dev/cu.usbmodem1101", baud_rate=9600):
+def find_arduino_port():
+    ports = list_ports.comports()
+    print(ports)
+
+    for port in ports:
+        description = port.description.lower()
+
+        if "arduino" in description:
+            print(description)
+            return port.device
+
+    raise RuntimeError("Arduino not found")
+
+
+
+
+
+def initialize_arduino_connection(port, baud_rate=9600):
     """
     Initialize connection to Arduino for LED control.
     
@@ -427,6 +464,7 @@ def initialize_arduino_connection(port="/dev/cu.usbmodem1101", baud_rate=9600):
     Returns:
         Serial connection object, or None if connection failed
     """
+    print('this is the port!: ' , port)
     try:
         arduino_conn = serial.Serial(port, baud_rate, timeout=1)
         time.sleep(2)  # Give Arduino time to reset
@@ -615,7 +653,7 @@ if __name__ == "__main__":
     # EDIT arduino path HERE!!!!
     # Top port: /dev/cu.usbmodem101
     # Bottom port: /dev/cu.usbmodem1101
-    arduino = initialize_arduino_connection("/dev/cu.usbmodem1101")
+    run_program()
     
     # Set up the plot
     fig, ax, ani = setup_plot()
